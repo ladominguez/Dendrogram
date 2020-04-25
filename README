@@ -1,0 +1,9 @@
+Mexico City, April 20th, 2020
+
+1. Run 01_create_uniq_member_id.sh
+2. Run 02_station_ids.sh
+3. Run 03_get_table_files.sh 
+echo "Run get_table_files.m in Matlab."
+4. Run 04_convert_table_sac.sh
+5. Run 05_change_names.sh
+6. Run 06_create_inputs.py modify params.yaml 
