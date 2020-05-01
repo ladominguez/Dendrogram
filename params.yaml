@@ -1,0 +1,5 @@
+root: /Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500
+ds_max: 1e6
+dt_lim: 60
+catalog: /Users/antonio/Dropbox/CRSMEX/Catalogs/CATALOG_2001_2019.DAT
+obs: /data01/antonio/Dropbox/BSL/CRSMEX/OBS
