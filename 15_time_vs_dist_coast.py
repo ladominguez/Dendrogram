@@ -5,7 +5,11 @@ from datetime import datetime, time
 import matplotlib.pyplot as plt
 from   matplotlib import cm
 import matplotlib as mpl
-root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+#import yaml
+
+params = yaml.load(open('params.yaml','r').read(),Loader=yaml.FullLoader)
+root   = params['root']
+root='/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
 directories=glob.glob(root + "/sequence_*/")
 
 # Input:
@@ -83,12 +87,12 @@ for dir in directories:
 			r_max = np.power((7/16)*(np.power(10.0,1.5*locmag[3] + 9.1)/ds),1.0/3)
 
 
-			if len(dates) == 2:
+			if len(dates) >= 2:
 				rgb = cmap((locmag[3] - 2.5)/2.0) 
 				if rel_dist[counter][counter+1] < r_max:
 					plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=14)		
 				else:
-					plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor='gray', markersize=10)
+					plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=10)
 		del dt
 	del date
 	del dates

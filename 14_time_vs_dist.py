@@ -5,7 +5,11 @@ from datetime import datetime, time
 import matplotlib.pyplot as plt
 from   matplotlib import cm
 import matplotlib as mpl
-root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+import yaml
+params = yaml.load(open('params.yaml','r').read()) #,Loader=yaml.FullLoader)
+root   = params['root']
+dt_lim = params['dt_lim']
+#root='/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
 directories=glob.glob(root + "/sequence_*/")
 
 # Input:
@@ -23,7 +27,7 @@ locmag_file = 'locmag_mean.dat'
 
 ds          = 100e6
 
-err_flag    = False
+err_flag    = True
 
 print("Num. directories = ", len(directories))
 directories.sort()
@@ -32,11 +36,13 @@ outputfile = root + '/' + root.split('/')[-1] + '.time_vs_distance.eps'
 plt.figure(num=None, figsize=(9, 6), dpi=120, facecolor='w', edgecolor='k') 
 
 cmap   = plt.cm.get_cmap('jet')
-norm   = mpl.colors.SymLogNorm(2.6, vmin=2.5, vmax=4.5)
+#norm   = mpl.colors.SymLogNorm(2.6, vmin=2.5, vmax=4.5)
+norm   = mpl.colors.SymLogNorm(2.6, vmin=2001, vmax=2020)
 
 sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
 sm.set_array([])
 mag = [2.5, 3.0, 3.5, 4.0, 4.5]
+yticks = [2001, 2005, 2010, 2015, 2020]
 #cm.set_clim(0, 2.0)
 for dir in directories:
 	first=True
@@ -77,19 +83,23 @@ for dir in directories:
 			b      = a
 			b_year = datetime.strptime(str(b.year),'%Y')
 			b_num  = b.year + (b-b_year).total_seconds()/(3600*24*365)
-			if rel_dist[counter][counter+1] == 0.0:
-				continue
+            
+			#if rel_dist[counter][counter+1] == 0.0:
+			#	continue
 
 			r_max = np.power((7/16)*(np.power(10.0,1.5*locmag[3] + 9.1)/ds),1.0/3)
 
 
 
-			if len(dates) == 2:
-				rgb = cmap((locmag[3] - 2.5)/2.0) 
+			if dt.total_seconds() >= dt_lim:
+				#rgb = cmap((locmag[3] - 2.5)/2.0) 
+				print((b_num - 2001)/20)
+				rgb = cmap((b_num - 2001)/20)
 				if rel_dist[counter][counter+1] < r_max:
-					plt.semilogy(rel_dist[counter][counter+1], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=14)		
+					plt.semilogy(rel_dist[counter][counter+1], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=10)		
 				else:
-					plt.semilogy(rel_dist[counter][counter+1], (dt.total_seconds()),'ko-',markerfacecolor='gray', markersize=10)
+					plt.semilogy(rel_dist[counter][counter+1], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=10)
+			counter = counter + 1 
 		del dt
 	del date
 	del dates
@@ -118,5 +128,5 @@ plt.xlabel('Relative distance [m]')
 plt.ylabel('Time [s]')
 plt.title('Assumed stress drop - ' + r'$\Delta\sigma=\,$' + str(int(np.round(ds/1e6))) + r'$\,MPa$')
 axes.set_xlim(limx)
-plt.colorbar(sm, ticks=mag, format=mpl.ticker.ScalarFormatter(),)
+plt.colorbar(sm, ticks=yticks, format=mpl.ticker.ScalarFormatter(),)
 plt.savefig(outputfile)
