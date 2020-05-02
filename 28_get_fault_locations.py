@@ -7,8 +7,8 @@ from scipy.spatial.distance import pdist, squareform
 params   = yaml.load(open('params.yaml','r').read())
 root     = params['root']
 
-root         = '/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2019JUN11/sequence_xc9500_coh9500'
-input_file   = root + '/sequence_00256_N05/matrix.dist.dat'
+root         = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+input_file   = root + '/sequence_00384_N07/matrix.dist.dat'
 output_file1 = 'inversion.dat'
 output_file2 = 'inverted.matrix.dat'
 
@@ -70,4 +70,5 @@ for file in files_all:
 		np.savetxt(ofile1, xy.detach().numpy(), fmt = '%6.1f')
 		np.savetxt(ofile2,  Y,                  fmt = '%6.1f')
 		print(' ')
-
+print('Writting: ', ofile1)
+print('Writting: ', ofile2)
