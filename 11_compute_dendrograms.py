@@ -120,7 +120,7 @@ for dir in directories:
 		np.savetxt(fileout,Yout,'%.2f')
 		Y  = np.genfromtxt(input_file, usecols=2, dtype=float)
 		#Z = linkage(distan,method='single')
-		Z = linkage(Ycon,method='average')
+		Z = linkage(Ycon,method='single')
 		print(Z.shape)
 		#Z[:,2] = Z[:,2]*(1/np.sqrt(2))
 		print(Z)
