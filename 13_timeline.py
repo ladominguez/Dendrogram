@@ -37,11 +37,12 @@ for dir in directories:
 		os.remove(file)
 	for date in dates:
 		if first:
-			b      = datetime.strptime(date,'%Y-%m-%d %H:%M:%S.%f')
-			b_year = datetime.strptime(str(b.year),'%Y')
-			b_num  = b.year + (b-b_year).total_seconds()/(3600*24*365)
-			first  = False
-			timel  = list()
+			b        = datetime.strptime(date,'%Y-%m-%d %H:%M:%S.%f')
+			b_year   = datetime.strptime(str(b.year),'%Y')
+			b_num    = b.year + (b-b_year).total_seconds()/(3600*24*365)
+			first    = False
+			timel    = list()
+			lim_down = b.year - 0.5
 			timel.append(b_num)
 			continue
 		else:
@@ -53,6 +54,7 @@ for dir in directories:
 			b  = a
 			b_year = datetime.strptime(str(b.year),'%Y')
 			b_num  = b.year + (b-b_year).total_seconds()/(3600*24*365)
+			lim_up = np.ceil(b.year) + 0.5
 			timel.append(b_num)
 	timea = np.asarray(timel, dtype=np.float32)
 	#print(timel)
@@ -66,6 +68,7 @@ for dir in directories:
 		ferr.write("Impossible to plot " + dir + "\n")
 		ferr.close()
 		continue	
+	
 	plt.xlim([lim_down,lim_up])
 	plt.ylim([0.0, 800.0])
 	plt.ylabel('Distance along the coast [km]')
