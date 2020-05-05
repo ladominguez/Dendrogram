@@ -71,22 +71,22 @@ for file in files_all:
 		np.savetxt(ofile1, xy.detach().numpy(), fmt = '%6.1f')
 		np.savetxt(ofile2,  Y,                  fmt = '%6.1f')
 		print(' ')
-                ofile3 = root + '/' + root_work + '/' + output_file3
-                f      = open(ofile3,'w')
-                cnt    = 0
-                cumerr = 0
-                f.write('i - j    Target    Inver   Diff   Error\n')
-                print('\ni - j    Target    Inver   Diff   Error')
+		ofile3 = root + '/' + root_work + '/' + output_file3
+		f      = open(ofile3,'w')
+		cnt    = 0
+		cumerr = 0
+		f.write('i - j    Target    Inver   Diff   Error\n')
+		print('\ni - j    Target    Inver   Diff   Error')
 
-                for i in range(N):
-                        for j in range(i+1, N):
-                                log_line = str(i) + '-' + str(j) + '      ' + '{:5.2f}'.format(distan[i][j]) + '     ' + '{:5.2f}'.format(Y[i][j]) + '     ' + '{:5.2f}'.format(Y[i][j] - distan[i][j]) + '     ' +  '{:5.2f}'.format(np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]) 
-                                f.write(log_line + '\n')
-                                print(log_line)
-                                cumerr += np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]
-                                cnt    += 1
-                f.write('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
-                print('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
-                print('Writting: ', ofile1)
-                print('Writting: ', ofile2)
-                f.close()
+		for i in range(N):
+		    for j in range(i+1, N):
+		        log_line = str(i) + '-' + str(j) + '      ' + '{:5.2f}'.format(distan[i][j]) + '     ' + '{:5.2f}'.format(Y[i][j]) + '     ' + '{:5.2f}'.format(Y[i][j] - distan[i][j]) + '     ' +  '{:5.2f}'.format(np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]) 
+		        f.write(log_line + '\n')
+		        print(log_line)
+		        cumerr += np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]
+		        cnt    += 1
+		        f.write('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
+		        print('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
+		        print('Writting: ', ofile1)
+		        print('Writting: ', ofile2)
+		        f.close()
