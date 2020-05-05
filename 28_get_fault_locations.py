@@ -8,9 +8,9 @@ params   = yaml.load(open('params.yaml','r').read())
 root     = params['root']
 
 root         = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
-input_file   = root + '/sequence_00384_N07/matrix.dist.dat'
 output_file1 = 'inversion.dat'
 output_file2 = 'inverted.matrix.dat'
+output_file3 = 'inverted.matrix.error'
 
 def get_loss():
     loss = 0.
@@ -49,7 +49,8 @@ for file in files_all:
 		print('Working on ' + root_work + '. ' + str(cnt) + ' out of ' + str(Na))
 
 		A = torch.tensor(distan).float()
-		xy = torch.rand((N,2),requires_grad=True)
+		xy = 100*torch.rand((N,2))
+		xy.requires_grad = True
 
 		optimizer = torch.optim.Adam([xy])
 
@@ -70,5 +71,22 @@ for file in files_all:
 		np.savetxt(ofile1, xy.detach().numpy(), fmt = '%6.1f')
 		np.savetxt(ofile2,  Y,                  fmt = '%6.1f')
 		print(' ')
+ofile3 = root + '/' + root_work + '/' + output_file3
+f      = open(ofile3,'w')
+cnt    = 0
+cumerr = 0
+f.write('i - j    Target    Inver   Diff   Error\n')
+print('\ni - j    Target    Inver   Diff   Error')
+
+for i in range(N):
+        for j in range(i+1, N):
+                log_line = str(i) + '-' + str(j) + '      ' + '{:5.2f}'.format(distan[i][j]) + '     ' + '{:5.2f}'.format(Y[i][j]) + '     ' + '{:5.2f}'.format(Y[i][j] - distan[i][j]) + '     ' +  '{:5.2f}'.format(np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]) 
+                f.write(log_line + '\n')
+                print(log_line)
+                cumerr += np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]
+                cnt    += 1
+f.write('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
+print('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
 print('Writting: ', ofile1)
 print('Writting: ', ofile2)
+f.close()
