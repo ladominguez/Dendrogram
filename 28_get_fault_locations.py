@@ -38,7 +38,7 @@ for file in files_all:
 	cnt = cnt + 1
 	distan = np.genfromtxt(file,  dtype=float)
 	N      = distan.shape[0]
-	if N >= 3:
+	if N >= 5:
 		if cnt > Nf:
 			root_work = file.split('/')[-3] + '/' + file.split('/')[-2]
 		else:
@@ -57,7 +57,7 @@ for file in files_all:
 
 
 		print('Finding solution ...')
-		for epoch in range(100000):
+		for epoch in range(1000000):
 		    optimizer.zero_grad()
 		    loss = get_loss()
 		    loss.backward()
@@ -85,8 +85,8 @@ for file in files_all:
 		        print(log_line)
 		        cumerr += np.abs(Y[i][j] - distan[i][j])*100/distan[i][j]
 		        cnt    += 1
-		        f.write('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
-		        print('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
-		        print('Writting: ', ofile1)
-		        print('Writting: ', ofile2)
-		        f.close()
+		f.write('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
+		print('Average error: ' + '{:5.2f}'.format(cumerr/cnt) + '\n')
+		print('Writting: ', ofile1)
+		print('Writting: ', ofile2)
+		f.close()

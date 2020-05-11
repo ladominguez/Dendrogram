@@ -19,7 +19,7 @@ locmag_file     = 'locmag_mean.dat'
 ds_lim          = 100e6
 file_decluster = 'decluster.dat'
 deg2rad        = np.pi/180.0
-
+output_file    = 'dendrogram.png'
 
 def distance2cluster(station):
     #print('STATION: ',station)
@@ -162,7 +162,7 @@ for dir in directories:
         #plt.title(dir.split('/')[-2] + ' - ' +sta)
         plt.title('Detected by: ' + ', '.join(stations), fontsize=18)
         #filename_fig = dir.split('/')[-2] + '.' + sta + '.dendrogram.png'
-        filename_fig = dir.split('/')[-2] + '.'  + 'dendrogram.eps'
+        filename_fig = dir.split('/')[-2] + '.'  + output_file
         
         print("Creating figure ", filename_fig)
         plt.savefig(filename_fig)

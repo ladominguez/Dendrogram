@@ -9,7 +9,7 @@ plt.matplotlib.use('Agg')
 params      = yaml.load(open('params.yaml','r').read())#,Loader=yaml.FullLoader)
 root        = params['root']
 ds_lim      = float(params['ds_max'])
-directories = glob.glob(root + '/sequence_00413*/')
+directories = glob.glob(root + '/sequence_*/')
 directories.sort()
 input1      = 'locmag.dat'
 input2      = 'matrix.dist.dat'
