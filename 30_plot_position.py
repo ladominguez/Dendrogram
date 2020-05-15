@@ -4,12 +4,12 @@ import numpy as np
 import matplotlib.image as mpimg
 
 
-plt.rcParams.update({'figure.figsize': (30,30)})
+plt.rcParams.update({'figure.figsize': (30,40)})
 plt.matplotlib.use('Agg')
 params      = yaml.load(open('params.yaml','r').read())#,Loader=yaml.FullLoader)
 root        = params['root']
 ds_lim      = float(params['ds_max'])
-directories = glob.glob(root + '/sequence_*/')
+directories = glob.glob(root + '/sequence_00413*/')
 directories.sort()
 input1      = 'locmag.dat'
 input2      = 'matrix.dist.dat'
@@ -27,7 +27,7 @@ for dir in directories:
 
     plt.figure(num=None, figsize=(12, 12), dpi=400, facecolor='w', edgecolor='k')
     os.chdir(dir)
-    outputfig = dir.split('/')[-2] + '.rupture.circle.pdf'
+    outputfig = dir.split('/')[-2] + '.rupture.circle.png'
     print(dir)
     mag = np.genfromtxt(input1, usecols=(5)  )
     loc = np.genfromtxt(input2, usecols=(0,1))
@@ -62,6 +62,7 @@ for dir in directories:
     plt.subplot(2,2,4)
     plt.imshow(img)
     plt.axis('off')
+    plt.tight_layout()    
     plt.savefig(outputfig)
     plt.close()
         

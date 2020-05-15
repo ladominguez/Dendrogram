@@ -27,6 +27,7 @@ locmag_file = 'locmag_mean.dat'
 
 ds          = 100e6
 
+
 err_flag    = True
 
 print("Num. directories = ", len(directories))
@@ -35,14 +36,14 @@ outputfile = root + '/' + root.split('/')[-1] + '.time_vs_distance.eps'
 
 plt.figure(num=None, figsize=(9, 6), dpi=120, facecolor='w', edgecolor='k') 
 
-cmap   = plt.cm.get_cmap('jet')
+cmap   = plt.cm.get_cmap('hot')
 #norm   = mpl.colors.SymLogNorm(2.6, vmin=2.5, vmax=4.5)
-norm   = mpl.colors.SymLogNorm(2.6, vmin=2001, vmax=2020)
+norm   = mpl.colors.Normalize( vmin=2000, vmax=2020)
 
 sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
 sm.set_array([])
-mag = [2.5, 3.0, 3.5, 4.0, 4.5]
-yticks = [2001, 2005, 2010, 2015, 2020]
+mag    = [2.5, 3.0, 3.5, 4.0, 4.5]
+yticks = [2000, 2005, 2010, 2015, 2020]
 #cm.set_clim(0, 2.0)
 for dir in directories:
 	first=True
@@ -93,8 +94,8 @@ for dir in directories:
 
 			if dt.total_seconds() >= dt_lim:
 				#rgb = cmap((locmag[3] - 2.5)/2.0) 
-				print((b_num - 2001)/20)
-				rgb = cmap((b_num - 2001)/20)
+				#print((b_num - 2001)/20)
+				rgb = cmap((b_num - 2000)/20)
 				if rel_dist[counter][counter+1] < r_max:
 					plt.semilogy(rel_dist[counter][counter+1], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=10)		
 				else:

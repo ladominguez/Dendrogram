@@ -5,11 +5,11 @@ from datetime import datetime, time
 import matplotlib.pyplot as plt
 from   matplotlib import cm
 import matplotlib as mpl
-#import yaml
+import yaml
 
-params = yaml.load(open('params.yaml','r').read(),Loader=yaml.FullLoader)
+params = yaml.load(open('params.yaml','r').read())#,Loader=yaml.FullLoader)
 root   = params['root']
-root='/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+#root='/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
 directories=glob.glob(root + "/sequence_*/")
 
 # Input:
@@ -26,21 +26,27 @@ dist_file   = 'time_dist.dat'
 locmag_file = 'locmag_mean.dat'
 
 ds          = 100e6
-
+dt_lim      = params['dt_lim']
+# Guerrero Gap
+ggap_W      = 321.42;
+ggap_E      = 544.37;
+ggap_x      = np.array([ggap_W, ggap_E])
 err_flag    = False
 
 print("Num. directories = ", len(directories))
 directories.sort()
-outputfile = root + '/' + root.split('/')[-1] + '.time_vs_distance_coast.eps'
+outputfile = root + '/' + root.split('/')[-1] + '.time_vs_distance_coast.png'
 
-plt.figure(num=None, figsize=(9, 6), dpi=120, facecolor='w', edgecolor='k') 
+plt.figure(num=None, figsize=(9, 6), dpi=300, facecolor='w', edgecolor='k') 
 
-cmap   = plt.cm.get_cmap('jet')
-norm   = mpl.colors.SymLogNorm(2.6, vmin=2.5, vmax=4.5)
+cmap   = plt.cm.get_cmap('hot')
+#norm   = mpl.colors.SymLogNorm(2.6, vmin=2.5, vmax=4.5)
+norm   = mpl.colors.Normalize(vmin=2000, vmax=2020)
 
 sm = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
 sm.set_array([])
-mag = [2.5, 3.0, 3.5, 4.0, 4.5]
+mag   = [2.5,   3.0,  3.5,  4.0,  4.5]
+tyear = [2000, 2005, 2010, 2015, 2020]
 #cm.set_clim(0, 2.0)
 for dir in directories:
 	first=True
@@ -85,33 +91,37 @@ for dir in directories:
 				continue
 
 			r_max = np.power((7/16)*(np.power(10.0,1.5*locmag[3] + 9.1)/ds),1.0/3)
-
-
+			mag_size=20*((locmag[3]-2)/3) + 1
+		
 			if len(dates) >= 2:
-				rgb = cmap((locmag[3] - 2.5)/2.0) 
-				if rel_dist[counter][counter+1] < r_max:
-					plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=14)		
-				else:
-					plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=10)
+				#rgb = cmap((locmag[3] - 2.5)/2.0) 
+				rgb = cmap((b_num - 2000)/20) 
+				if dt.total_seconds() >= dt_lim: 
+					if rel_dist[counter][counter+1] < r_max:
+						plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=np.round(mag_size))		
+					else:
+						plt.semilogy(dist_coast[0], (dt.total_seconds()),'ko-',markerfacecolor=rgb, markersize=np.round(mag_size))
 		del dt
 	del date
 	del dates
 fig  = plt.gcf()
 axes = plt.gca()
 limx = axes.get_xlim()
-
-
+limy = axes.get_ylim()
+top = np.array([limy[1], limy[1]])
+axes.fill_between(ggap_x, limy[0], top, facecolor='red', alpha=0.25, edgecolor='r')
 plt.semilogy(np.array(limx),np.array([     3600,       3600]),'k',linestyle='--',linewidth = 1)
 plt.semilogy(np.array(limx),np.array([    86400,      86400]),'k',linestyle='--',linewidth = 1)
 plt.semilogy(np.array(limx),np.array([  2419200,    2419200]),'k',linestyle='--',linewidth = 1)
 plt.semilogy(np.array(limx),np.array([ 31536000,   31536000]),'k',linestyle='--',linewidth = 1)
 plt.semilogy(np.array(limx),np.array([315360000, 315360000]),'k',linestyle='--',linewidth = 1)
 
-plt.text(-10, 1.2*3600,      '1hour',   color='k')		
-plt.text(-10, 1.2*86400,     '1day',    color='k')		
-plt.text(-10, 1.2*2419200,   '1month',  color='k')		
-plt.text(-10, 1.2*31536000,  '1year',   color='k')		
-plt.text(-10, 1.2*315360000, '10years', color='k')		
+plt.text(250, 1.2*3600,      '1hour',   color='k')		
+plt.text(250, 1.2*86400,     '1day',    color='k')		
+plt.text(250, 1.2*2419200,   '1month',  color='k')		
+plt.text(250, 1.2*31536000,  '1year',   color='k')		
+plt.text(250, 1.2*315360000, '10years', color='k')		
+plt.text(340,     1400, 'Guerrero Gap', color='k',fontsize=16)		
 
 #plt.xlim([lim_down,lim_up])
 #plt.ylim([0.0, 800.0])
@@ -121,5 +131,6 @@ plt.xlabel('Distance along the coast [m]')
 plt.ylabel('Time [s]')
 plt.title('Assumed stress drop - ' + r'$\Delta\sigma=\,$' + str(int(np.round(ds/1e6))) + r'$\,MPa$')
 axes.set_xlim(limx)
-plt.colorbar(sm, ticks=mag, format=mpl.ticker.ScalarFormatter(),)
+axes.set_ylim(limy)
+plt.colorbar(sm, ticks=tyear, format=mpl.ticker.ScalarFormatter(),)
 plt.savefig(outputfile)
