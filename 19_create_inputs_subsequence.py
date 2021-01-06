@@ -3,7 +3,7 @@ import os
 
 # Run in the directory /data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2019JUN11/sequence_xc9500_coh9500
 
-os.chdir('/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500')
+os.chdir('/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500')
 directories=glob.glob("./sequence_*/SEQ*")
 
 print("Num. directories = ", len(directories))

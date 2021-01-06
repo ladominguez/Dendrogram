@@ -2,7 +2,7 @@ import glob, os
 import numpy as np
 
 
-root   = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+root   = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
 files  = glob.glob(root + "/sequence_*/*sequence.dat" )
 ds_lim = 100e6  # Stress drop in Pa
 

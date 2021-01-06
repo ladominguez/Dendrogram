@@ -1,8 +1,8 @@
 #!/bin/sh
 
 
-ROOT='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
-CAT='/mnt/data01/antonio/Dropbox/CRSMEX/Catalogs/CATALOG_2001_2019.DAT'
+ROOT='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
+CAT='/mnt/data01/antonio/Dropbox/CRSMEX/Catalogs/CATALOG_2001_2020.DAT'
 cd $ROOT
 
 for k in $(ls -d sequence_*/SEQ*); do

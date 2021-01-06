@@ -5,8 +5,8 @@
 
 # Luis. A. Dominguez Mexico City, 2019
 
-ROOT='/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2019JUN11/sequence_xc9500_coh9500'
-DATA='/data01/antonio/Dropbox/BSL/CRSMEX/data'
+ROOT='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
+DATA='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/data'
 
 INPUT1=unique_member_id.info
 INPUT2=station_ids.info

@@ -1,11 +1,12 @@
 import glob
 import os
 import numpy as np
-#matplotlib.use('agg')
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import jul2mmdd
 
-root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
 directories=glob.glob(root + "/sequence_*/SEQ*")
 
 # Input: 

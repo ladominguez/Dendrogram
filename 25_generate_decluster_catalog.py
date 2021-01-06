@@ -8,7 +8,7 @@ input2 = 'unique_member_id.info'
 input3 = '.discard.dat'
 input4 = 'date_time.dat'
 
-params  = yaml.load(open('params.yaml','r').read(), Loader=yaml.FullLoader)
+params  = yaml.load(open('params.yaml','r').read()) #:wq Loader=yaml.FullLoader)
 root    = params['root']
 
 os.chdir(root)

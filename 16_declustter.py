@@ -2,12 +2,13 @@ import glob
 import numpy as np
 
 
-root   = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+root   = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
 files  = glob.glob(root + "/sequence_*/decluster.dat" )
 ds_lim = 100e6
 
 files.sort()
 seq_id  = 0
+print("No. files: ", len(files))
 for file in files:
 	file_log = ".decluster.log"
 	seq_file = ".subsequence.dat"

@@ -2,7 +2,7 @@ import glob
 import os
 import yaml
 
-# Run in the directory /data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2019JUN11/sequence_xc9500_coh9500
+# Run in the directory /data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500
 params = yaml.load(open('params.yaml','r').read())
 root   = params['root']
 

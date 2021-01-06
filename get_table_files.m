@@ -11,9 +11,9 @@ clc
 
 addpath('~/CJA_Msac1.1/io/')
 addpath('/mnt/data01/antonio/Dropbox/CRSMEX/matlab/')
-addpath('/mnt/data01/antonio/Dropbox/lib_matlab/')
+addpath('/mnt/data01/antonio/Dropbox/lib/')
 
-starting_directory = 1;
+starting_directory = 466;
 
 low      = 3; % See Snider Paper
 high     = Inf;

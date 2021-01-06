@@ -4,7 +4,7 @@ from datetime import datetime, time
 #matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
-root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
 directories=glob.glob(root + "/sequence_*/")
 
 # Input:
@@ -18,7 +18,7 @@ input_file  = 'date_time.dat'
 dist_file   = 'time_dist.dat'
 
 lim_down    = 2001.0
-lim_up      = 2019.0
+lim_up      = 2021.0
 
 print("Num. directories = ", len(directories))
 directories.sort()

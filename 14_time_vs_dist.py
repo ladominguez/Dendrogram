@@ -1,10 +1,10 @@
 import glob, os
 import numpy as np
 from datetime import datetime, time
-#matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from   matplotlib import cm
 import matplotlib as mpl
+mpl.use('agg')
 import yaml
 params = yaml.load(open('params.yaml','r').read()) #,Loader=yaml.FullLoader)
 root   = params['root']
@@ -35,7 +35,6 @@ directories.sort()
 outputfile = root + '/' + root.split('/')[-1] + '.time_vs_distance.eps'
 
 plt.figure(num=None, figsize=(9, 6), dpi=120, facecolor='w', edgecolor='k') 
-
 cmap   = plt.cm.get_cmap('hot')
 #norm   = mpl.colors.SymLogNorm(2.6, vmin=2.5, vmax=4.5)
 norm   = mpl.colors.Normalize( vmin=2000, vmax=2020)

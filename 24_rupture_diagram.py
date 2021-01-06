@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from   matplotlib import cm
 import yaml
 
-params = yaml.load(open('params.yaml','r').read(),Loader=yaml.FullLoader)
+params = yaml.load(open('params.yaml','r').read())#,Loader=yaml.FullLoader)
 root   = params['root']
 #root='/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
 directories=glob.glob(root + "/sequence_*/SEQ*")
@@ -35,8 +35,10 @@ err=True
 
 cmap = cm.get_cmap('gist_heat')
 
+print('No. directories: ', len(directories))
 for dir in directories:
 	os.chdir(dir)
+	print(dir)
 	outputfile = dir.split('/')[-2] + '.' + dir.split('/')[-1] + '.rupture.eps'
 
 
@@ -97,7 +99,7 @@ for dir in directories:
 	del distan
 	del locmag
 	os.chdir(root)
-	exit()
+
 fout.close()
 if not err:
 	print("Errors occured during execution. Check file :", root+"/logs/11_error.log\n" ) 

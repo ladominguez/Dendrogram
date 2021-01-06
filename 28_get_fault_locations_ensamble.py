@@ -1,13 +1,13 @@
 #!/bin/python
 
-import yaml, glob, torch, glob
+import glob, torch, glob
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
-params   = yaml.load(open('params.yaml','r').read(),Loader=yaml.FullLoader)
-root     = params['root']
+#params   = yaml.load(open('params.yaml','r').read(),Loader=yaml.FullLoader)
+#root     = params['root']
 
-root         = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500'
+root         = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500'
 output_file1 = 'inversion'
 output_file2 = 'inverted.matrix'
 output_file3 = 'inverted.matrix'
@@ -20,7 +20,7 @@ def get_loss():
     return loss
 
 
-files1 = glob.glob(root + '/sequence_00413*/matrix.dist.dat')
+files1 = glob.glob(root + '/sequence_00438*/matrix.dist.dat')
 file=files1[0]
 files1.sort()
 

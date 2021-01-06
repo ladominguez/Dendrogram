@@ -7,7 +7,7 @@ from matplotlib              import gridspec
 from greatcircle             import great_circle_dist as gc
 
 min_members  = 1
-root         = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500/'
+root         = '/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500/'
 directories  = glob.glob(root + 'sequence_*/SEQ*')
 fileout      = 'matrix.dist.dat'
 #filedist     = 'locmag_mean.dat'

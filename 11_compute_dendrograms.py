@@ -7,7 +7,7 @@ from matplotlib              import gridspec
 from greatcircle             import great_circle_dist as gc
 
 min_members  = 1
-directories  = glob.glob("/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020MAR27/sequence_xc9500_coh9500/sequence_*/")
+directories  = glob.glob("/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500/sequence_*/")
 fileout      = 'matrix.dist.dat'
 filedist     = 'locmag_mean.dat'
 input_file   = 'merge.correli.dat'
