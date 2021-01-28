@@ -1,4 +1,5 @@
 import obspy as ob
+from obspy.signal.cross_correlation import xcorr_pick_correction
 from obspy.core.utcdatetime import UTCDateTime
 import numpy as np
 import json
@@ -14,7 +15,7 @@ fparam  = open('params.json')
 fstress = open('stress.json')
 stress  = json.load(fstress)
 params  = json.load(fparam)
-path    = os.path.join(params['root'], 'sequence_00001*', 'raw')
+path    = os.path.join(params['root'], 'sequence_0*', 'raw')
 
 resp_type = stress["resp_type"]
 type_wave = stress["type_wave"]
@@ -54,6 +55,9 @@ def M0_func(Mw):
 
 def stress_drop(freq_cut, kappa, vel_wave, Moment):
 	return (7./16)*Moment*(freq_cut/(kappa*vel_wave))**3
+
+def rms(data):
+	return np.sqrt(np.mean(np.power(data,2)))
 
 #def brune_spectrum(f, fc, stress):
 #	print('M0: ', M0)
@@ -111,6 +115,7 @@ def clean_directory(dir):
 for dir in directories:
 	print(dir)
 	sac = ob.read(os.path.join(dir, "*sac"))
+	sac.detrend('linear')
 	sta = set([tr.stats.sac.kstnm     for tr in sac])
 	sta = sorted(sta)
 	clean_directory(dir)
@@ -118,7 +123,7 @@ for dir in directories:
 	Data_out    = os.path.join(dir, sequence_id + '.stress_drop.' + resp_type + '.dat')
 	fout        = open(Data_out, 'w')
 
-	fout.write('Station  Wave    Type      date_time           mag   distance    fcut   std_fcut    Mcorr std_Mcorr strees_drop    ID \n')
+	fout.write('Station  Wave    Type      date_time           mag   distance    fcut   std_fcut    Mcorr std_Mcorr strees_drop   SNR     ID \n')
 	for count, station in enumerate(sta):
 		print(count + 1, " - ", station)
 		sel = sac.select(station=station)
@@ -154,49 +159,86 @@ for dir in directories:
 		SPEC_out     = os.path.join(dir, station + '.SPE.png')
 		Brune_out    = os.path.join(dir, station + '.BRUNE.png')
 
-		fig, ax = plt.subplots(len(sel), 1, figsize=(12, 6), sharex=True , squeeze=False)
+		fig, ax = plt.subplots(len(sel) + 1, 1, figsize=(12, 6), sharex=False , squeeze=False)
 		ax = ax.flatten()
 		for k, tr in enumerate(sel):
+			if k == 0:
+				tmaster  = tr
+				t0_utc   = tr.stats.starttime + tr.stats.sac.t5
+				t5_mas   = tr.stats.sac.t5
+				nsamples = 0 # doesn't shift master
+				#print('tmaster: ', t0_utc, ' t5: ', t5_mas)
+			else: 
+				tp_utc  = tr.stats.starttime + tr.stats.sac.t5
+				#print('k: ', k , ' t: ', tp_utc, ' t5: ', tr.stats.sac.t5)
+				try:
+					dt_shift, coeff = xcorr_pick_correction(t0_utc, tmaster, tp_utc, tr, 0.1, 0.8, 0.8, plot=False,
+    	                              filter="bandpass",
+    	                              filter_options={'freqmin': 1, 'freqmax': 10})
+				except:
+					dt_shift = float("NaN")
+				if np.isnan(dt_shift):
+					dt_shift = 0
+				tr.stats.sac.t5 = round(tr.stats.sac.t5 + dt_shift, 2)
+				nsamples = int(np.round((t5_mas - tr.stats.sac.t5)*tmaster.stats.sampling_rate))
+				#print('nsamples: ', dt_shift*tmaster.stats.sampling_rate, ' dt_shift: ', dt_shift, ' tp_utc: ', tp_utc)
 
 			date[k] = tr.stats.starttime.strftime("%Y/%m/%d,%H:%M:%S")
 			Rij[k]  = np.sqrt(tr.stats.sac.dist**2+tr.stats.sac.evdp**2)*1e3
 			dt[k]   = tr.stats.delta
 			mag[k]  = tr.stats.sac.mag
 			az[k]   = tr.stats.sac.az
-			ax[k].plot(tr.times(), tr.data, 'k', linewidth=0.25, label=date[k])
-			ax[k].plot(tr.stats.sac.t5, 0, 'r*', markersize=15)
+
+			aux     = tr.copy()
+			aux.detrend('linear')
+			aux.filter("bandpass", freqmin = 1.0, freqmax = 10., zerophase=True)
+
+			ax[k].plot(aux.times(), aux.data, 'k', linewidth=0.25, label=date[k])
+			ax[k].plot(aux.stats.sac.t5, 0, 'r*', markersize=15)
 				# ax[k].plot(tr.stats.sac.t1,0,'b*',markersize=15)
 			ax[k].grid()
 			ax[k].legend(fontsize=14)
 			ax[k].set_ylabel(dict_ylabel[resp_type], fontsize=14)
 			ax[k].set_xlim([0,np.ceil(tp_wave.max()*3/5)*5])
+			index_t5 = np.where(np.logical_and(tr.times() >= t5_mas -1,  aux.times() <= t5_mas + 5 ))
+			max_val  = np.amax(np.abs(aux.data[index_t5]))
+			
+			ax[len(sel)].plot(aux.times(), np.roll(aux.data, nsamples)/max_val)
+			ax[len(sel)].grid(b=True)
+			ax[len(sel)].set_xlim([t5_mas -0.5, t5_mas + 2.0])
 
 
 		plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
-		plt.subplots_adjust(hspace=0, wspace=0)
+		#plt.subplots_adjust(hspace=0, wspace=0)
 		plt.savefig(waveform_out)
 		plt.close()
 
 		# Trim to p-wave
-		d = {}
-		fig, ax = plt.subplots(len(sel), 1, figsize=(12, 6), sharex=True, squeeze=False )
+		d       = {}
+		noise   = {}
+		snr     = {}
+		fig, ax = plt.subplots(len(sel), 1, figsize=(24, 8), sharex=True, squeeze=False )
 		ax      = ax.flatten()
 		for k, tr in enumerate(sel):
 			t = tr.times() + tr.stats.sac.b
 			dt[k] = tr.stats.delta
 			if type_wave == 'P':
 				twave = tr.stats.sac.t5
-				k_sd = 0.32   # Madariaga 1976 - See Sheare page 270
+				k_sd = 0.32   # Madariaga 1976 - See Shearer page 270
 			else:
-				twave = tr.stats.sac.t5
-				k_sd = 0.21   # Madariaga 1976 - See Sheare page 270
+				twave = tr.stats.sac.t5  # ERROR CORREGIR
+				k_sd = 0.21   # Madariaga 1976 - See Shearer page 270
 
-			tpn = np.argmax(t >= twave)
+			tr.data = tr.data*1e-9
+			tpn   = np.argmax(t >= twave)
 			tnbef = int(np.floor(tbef/dt[k]))
-			d[k] = tr.data[tpn - tnbef:tpn - tnbef + Nfft] - \
-			    np.mean(tr.data[tpn - tnbef:tpn - tnbef + Nfft])
-			taper = tukey(Nfft, alpha=0.1)
-			d[k]  = np.multiply(d[k], taper)
+			d[k]  = tr.data[tpn - tnbef:tpn - tnbef + Nfft] - \
+			        np.mean(tr.data[tpn - tnbef:tpn - tnbef + Nfft])
+			noise[k] = tr.data[tpn - tnbef - Nfft :tpn - tnbef ] - \
+			        np.mean(tr.data[tpn - tnbef - Nfft :tpn - tnbef ])
+			taper  = tukey(Nfft, alpha=0.1)
+			d[k]   = np.multiply(d[k], taper)
+			snr[k] = rms(d[k])/rms(noise[k])
 			ax[k].plot(np.linspace(-0.5, (Nfft-1)*dt[k]-0.5, Nfft),
 			           d[k], 'k', linewidth=1, label=date[k])
 			ax[k].legend(fontsize=14)
@@ -287,11 +329,11 @@ for dir in directories:
 		    ax[1].plot(fb, brune_log(fb,  Mcorr[key], fcut[key]),'o-')
 		    #print('fcut')
 		    print('fcut[', key,']: ', '%5.2f'%fcut[key], ' Mcorr[', key, ']: ', '%5.2f'%Mcorr[key], 
-			' Stress drop[', key, ']: ', '%5.2f'%stress[key], 'MPa')
+			' Stress drop[', key, ']: ', '%5.2f'%stress[key], 'MPa   SNR: ' + '%5.1f'%snr[key] )
 		    fout.write(station + '       ' + type_wave + '     ' + resp_type + '    ' + date[key] + '    ' + '%3.1f'%mag[key]  
 				+ '    ' + '%6.1f'%(Rij[key]/1e3) + '    ' + '%5.2f'%fcut[key] + '    ' + '%6.3f'%fcuts[key]  + '    '
 				+ '%5.2f'%Mcorr[key] + '    ' + '%6.3f'%Mcorrs[key]  + '    '
-				+ '%6.2f'%stress[key]  + '    ' + sequence_id.split('_')[1] + '\n')
+				+ '%6.2f'%stress[key]  + '    ' + '%5.1f'%snr[key] + '    ' + sequence_id.split('_')[1] + '\n')
 
 		ax[0].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
 		ax[0].grid(b=True, which='minor', color='k', linestyle='--',linewidth=0.25)  
