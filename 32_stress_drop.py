@@ -84,6 +84,7 @@ for dir in directories:
 		#for k in range(len(sel)):
 		for k,tr in enumerate(sel):
 			RESP_FILE = get_reponse_files(params['iresp'], station, tr.stats.starttime)
+			#print('RESP: ', RESP_FILE)
 			if RESP_FILE is None:
 				Invalid = True
 				continue
@@ -121,7 +122,7 @@ for dir in directories:
 				tp_utc  = tr.stats.starttime + tr.stats.sac.t5
 				#print('k: ', k , ' t: ', tp_utc, ' t5: ', tr.stats.sac.t5)
 				try:
-					dt_shift, coeff = xcorr_pick_correction(t0_utc, tmaster, tp_utc, tr, 0.1, 0.8, 0.8, plot=False,
+					dt_shift, coeff = xcorr_pick_correction(t0_utc, tmaster, tp_utc, tr, 0.1, 1.6, 1.7, plot=False,
     	                              filter="bandpass",
     	                              filter_options={'freqmin': 1, 'freqmax': 10})
 				except:
@@ -291,7 +292,7 @@ for dir in directories:
 		    fcuts[key]  = errors[0]
 		    Mcorr[key]  = popt[0]
 		    Mcorrs[key] = errors[1] 
-		    stress[key] = stress_drop(fcut[key], k_sd, vel[type_wave], np.power(10,Mcorr[0]))/1e6
+		    stress[key] = stress_drop(fcut[key], k_sd, vel['S'], np.power(10,Mcorr[0]))/1e6
 
 		plt.gca().set_prop_cycle(None)
 		for key, fb in fspec.items():

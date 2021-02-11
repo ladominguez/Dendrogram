@@ -1,6 +1,6 @@
 {
-"root"   : "/mnt/data01/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500",
-"iresp"  : "/mnt/data01/antonio/Dropbox/BSL/CRSMEX/InstrumentResponse/PZ-RESP",
+"root"   : "/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500",
+"iresp"  : "/Users/antonio/Dropbox/BSL/CRSMEX/InstrumentResponse/PZ-RESP",
 "ds_max" : 100e6,
 "dt_lim" : 60,
 "catalog": "/mnt/data01/antonio/Dropbox/CRSMEX/Catalogs/CATALOG_2001_2020.DAT",

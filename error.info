@@ -1,0 +1,33 @@
+/Users/antonio/Dropbox/BSL/CRSMEX/Dendrograms/2020AGO07/sequence_xc9500_coh9500/sequence_00365_N06/raw
+1  -  PEIG
+fcut[ 0 ]:  10.00  Mcorr[ 0 ]:   8.88  Stress drop[ 0 ]:  24.66 MPa
+fcut[ 1 ]:  10.00  Mcorr[ 1 ]:   8.79  Stress drop[ 1 ]:  49.21 MPa
+fcut[ 2 ]:   4.36  Mcorr[ 2 ]:   9.24  Stress drop[ 2 ]:   2.89 MPa
+fcut[ 3 ]:  10.00  Mcorr[ 3 ]:   8.69  Stress drop[ 3 ]:  34.84 MPa
+fcut[ 4 ]:   6.91  Mcorr[ 4 ]:   9.14  Stress drop[ 4 ]:  22.95 MPa
+fcut[ 5 ]:   6.35  Mcorr[ 5 ]:   9.30  Stress drop[ 5 ]:  17.84 MPa
+2  -  TXIG
+ERROR: No RESP file for  TXIG  at time:  2015-09-23T18:53:10.900000Z
+ERROR: No RESP file for  TXIG  at time:  2016-07-21T05:07:00.100000Z
+ERROR: No RESP file for  TXIG  at time:  2018-04-22T15:56:09.000000Z
+ERROR: No RESP file for  TXIG  at time:  2019-02-27T16:59:41.000000Z
+ERROR: No RESP file for  TXIG  at time:  2020-06-21T16:05:57.000000Z
+3  -  PNIG
+fcut[ 0 ]:   2.54  Mcorr[ 0 ]:  10.45  Stress drop[ 0 ]:   0.40 MPa
+fcut[ 1 ]:   3.27  Mcorr[ 1 ]:  10.23  Stress drop[ 1 ]:   1.72 MPa
+fcut[ 2 ]:   1.95  Mcorr[ 2 ]:  10.61  Stress drop[ 2 ]:   0.26 MPa
+fcut[ 3 ]:   2.98  Mcorr[ 3 ]:  10.21  Stress drop[ 3 ]:   0.92 MPa
+fcut[ 4 ]:   2.24  Mcorr[ 4 ]:  10.79  Stress drop[ 4 ]:   0.78 MPa
+fcut[ 5 ]:   0.00  Mcorr[ 5 ]:  14.00  Stress drop[ 5 ]:   0.00 MPa
+4  -  YOIG
+Traceback (most recent call last):
+  File "32_stress_drop.py", line 136, in <module>
+    sel[k].remove_response(inventory=inv, output=resp_type, zero_mean=True, pre_filt=pre_filt, taper=True)
+  File "<decorator-gen-28>", line 2, in remove_response
+  File "/Users/antonio/opt/anaconda3/envs/mtspec/lib/python3.6/site-packages/obspy/core/trace.py", line 273, in _add_processing_info
+    result = func(*args, **kwargs)
+  File "/Users/antonio/opt/anaconda3/envs/mtspec/lib/python3.6/site-packages/obspy/core/trace.py", line 2782, in remove_response
+    response = self._get_response(inventory)
+  File "/Users/antonio/opt/anaconda3/envs/mtspec/lib/python3.6/site-packages/obspy/core/trace.py", line 2612, in _get_response
+    raise ValueError(msg)
+ValueError: No matching response information found.

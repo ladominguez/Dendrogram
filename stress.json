@@ -1,9 +1,9 @@
 {
 "resp_type" : "ACC",
 "type_wave" : "P",
-"pre_filt"  : [0.2, 0.5, 30, 40],
-"tbef"      : 0.25,
-"Nfft"      : 128,
-"fmin"      : 1.0,
-"fmax"      : 12.0
+"pre_filt"  : [0.005, 0.0125, 30, 40],  
+"tbef"      : 0.0,
+"Nfft"      : 64,
+"fmin"      : 0.25,
+"fmax"      : 20.0
 }
