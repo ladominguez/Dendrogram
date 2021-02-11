@@ -9,13 +9,14 @@ from matplotlib import pyplot as plt
 from scipy.signal import tukey
 from mtspec import mtspec
 from scipy.optimize import curve_fit
+from utils import *
 plt.rcParams.update({'font.size': 16})
 
 fparam  = open('params.json')
 fstress = open('stress.json')
 stress  = json.load(fstress)
 params  = json.load(fparam)
-path    = os.path.join(params['root'], 'sequence_0*', 'raw')
+path    = os.path.join(params['root'], 'sequence_00*', 'raw')
 
 resp_type = stress["resp_type"]
 type_wave = stress["type_wave"]
@@ -34,30 +35,6 @@ vel         = {"P": 6230, "S": 3600}
 
 print("0. stress: ", stress)
 
-def G(r):
-	R0 = 100e3
-	if r <= R0:
-		return 1./r
-	else:
-		return 1.0/(np.sqrt(R0*r))
-
-
-def Q(f, azimuth):
-	if ((azimuth >= 270) and (azimuth <= 330)) or ((azimuth >= 90) and (azimuth <= 150)):
-		return 175.0*np.power(f, 0.52)
-	else:
-		return 211.0*np.power(f, 0.46)
-
-def M0_func(Mw):
-	return np.power(10,Mw*1.5+9.1)
-
-
-
-def stress_drop(freq_cut, kappa, vel_wave, Moment):
-	return (7./16)*Moment*(freq_cut/(kappa*vel_wave))**3
-
-def rms(data):
-	return np.sqrt(np.mean(np.power(data,2)))
 
 #def brune_spectrum(f, fc, stress):
 #	print('M0: ', M0)
@@ -69,30 +46,6 @@ def rms(data):
 #		None
 #	return Sb
 
-def get_reponse_files(dir_resp, station_name, t_start):
-	if station_name.strip() == 'YOIG':
-#		if   t_start >= UTCDateTime(2012,9,6)  and t_start < UTCDateTime(2014,6,20):
-#			RESP_FILE = os.path.join(dir_resp, 'YOIG_IG_20120906_20140620.RESP')
-		if t_start >= UTCDateTime(2014,6,20) and t_start < UTCDateTime(2014,9,3):
-			RESP_FILE = os.path.join(dir_resp, 'YOIG_IG_20140620_20140903.RESP')
-		elif t_start >= UTCDateTime(2014,9,3): 
-			RESP_FILE = os.path.join(dir_resp, 'YOIG_IG_20140903_21001231.RESP')
-		else:
-			print('ERROR: No RESP file for ',station_name, ' at time: ', t_start )
-			return None
-	elif station_name.strip() == 'TXIG':
-		if   t_start >= UTCDateTime(2012,9,3)  and t_start < UTCDateTime(2014,4,8):
-			RESP_FILE = os.path.join(dir_resp, 'TXIG_IG_20120903_20140408.RESP')
-		elif t_start >= UTCDateTime(2014,4,8)  and t_start < UTCDateTime(2014,6,21):
-			RESP_FILE = os.path.join(dir_resp, 'TXIG_IG_20140408_20140621.RESP')
-		elif t_start >= UTCDateTime(2014,6,21) and t_start < UTCDateTime(2015,8,6): 
-			RESP_FILE = os.path.join(dir_resp, 'TXIG_IG_20140621_20150806.RESP')
-		else:
-			print('ERROR: No RESP file for ',station_name, ' at time: ', t_start )
-			return None
-	else:
-		RESP_FILE = os.path.join(dir_resp, station_name + '.RESP')
-	return RESP_FILE
 
 def brune_log(f, log_M0, fc ):
 	if resp_type == "DISP":
@@ -106,11 +59,6 @@ def brune_log(f, log_M0, fc ):
 
 	return Sb_log
 
-def clean_directory(dir):
-	previous = glob.glob(os.path.join(dir, "*.png"))
-	for png_file in previous:
-		os.remove(png_file)
-	
 
 for dir in directories:
 	print(dir)
@@ -128,19 +76,20 @@ for dir in directories:
 		print(count + 1, " - ", station)
 		sel = sac.select(station=station)
 		#if True: #os.path.exists(RESP_FILE):
-		sel.detrend()
+		#sel.detrend()
 		sel.taper(max_percentage=0.05)
 
 		tp_wave = np.zeros((len(sel),1))
 		Invalid = False
-		for k in range(len(sel)):
-			RESP_FILE = get_reponse_files(params['iresp'], station, sel[k].stats.starttime)
+		#for k in range(len(sel)):
+		for k,tr in enumerate(sel):
+			RESP_FILE = get_reponse_files(params['iresp'], station, tr.stats.starttime)
 			if RESP_FILE is None:
 				Invalid = True
 				continue
 			inv = ob.read_inventory(RESP_FILE)
-			sel[k].remove_response(inventory=inv, output=resp_type, zero_mean=True, pre_filt=pre_filt, taper=True)
-			tp_wave[k] = sel[k].stats.sac.t5
+			tr.remove_response(inventory=inv, output=resp_type, zero_mean=True, pre_filt=pre_filt, taper=True)
+			tp_wave[k] = tr.stats.sac.t5
 
 		if Invalid:
 			continue
@@ -191,21 +140,31 @@ for dir in directories:
 
 			aux     = tr.copy()
 			aux.detrend('linear')
-			aux.filter("bandpass", freqmin = 1.0, freqmax = 10., zerophase=True)
+			#aux.filter("bandpass", freqmin = 1.0, freqmax = 10., zerophase=True)
 
 			ax[k].plot(aux.times(), aux.data, 'k', linewidth=0.25, label=date[k])
 			ax[k].plot(aux.stats.sac.t5, 0, 'r*', markersize=15)
-				# ax[k].plot(tr.stats.sac.t1,0,'b*',markersize=15)
+			# ax[k].plot(tr.stats.sac.t1,0,'b*',markersize=15)
 			ax[k].grid()
 			ax[k].legend(fontsize=14)
+
 			ax[k].set_ylabel(dict_ylabel[resp_type], fontsize=14)
 			ax[k].set_xlim([0,np.ceil(tp_wave.max()*3/5)*5])
-			index_t5 = np.where(np.logical_and(tr.times() >= t5_mas -1,  aux.times() <= t5_mas + 5 ))
-			max_val  = np.amax(np.abs(aux.data[index_t5]))
 			
-			ax[len(sel)].plot(aux.times(), np.roll(aux.data, nsamples)/max_val)
+			x_lims_wave = ax[k].get_xlim()
+			y_data_plot = np.where( (aux.times() > x_lims_wave[0]) &  (aux.times() < x_lims_wave[1]) )[0]
+			ax[k].set_ylim( aux.data[y_data_plot].min(), aux.data[y_data_plot].max() )
+			index_t5   = np.where(np.logical_and(tr.times() >= t5_mas -1,  aux.times() <= t5_mas + 5 ))
+			max_val    = np.amax(np.abs(aux.data[index_t5]))
+
+			roll_aux = 	np.roll(aux.data, nsamples)/max_val
+			ax[len(sel)].plot(aux.times(), roll_aux)
 			ax[len(sel)].grid(b=True)
-			ax[len(sel)].set_xlim([t5_mas -0.5, t5_mas + 2.0])
+			ax[len(sel)].set_xlim([t5_mas -0.5, t5_mas + 1.0])
+
+			x_lims_wave = ax[len(sel)].get_xlim()
+			y_data_plot = np.where( (aux.times() > x_lims_wave[0]) &  (aux.times() < x_lims_wave[1]) )[0]	
+			ax[len(sel)].set_ylim( roll_aux[y_data_plot].min(), roll_aux[y_data_plot].max() )
 
 
 		plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
@@ -229,7 +188,7 @@ for dir in directories:
 				twave = tr.stats.sac.t5  # ERROR CORREGIR
 				k_sd = 0.21   # Madariaga 1976 - See Shearer page 270
 
-			tr.data = tr.data*1e-9
+			tr.data = tr.data  # WARNING *1e-9
 			tpn   = np.argmax(t >= twave)
 			tnbef = int(np.floor(tbef/dt[k]))
 			d[k]  = tr.data[tpn - tnbef:tpn - tnbef + Nfft] - \
@@ -271,7 +230,7 @@ for dir in directories:
 		ax.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.25)
 		ax.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.25)
 		plt.xlabel('Frequency [Hz]', fontsize=14)
-		plt.title('Corrected spectrum - ' + station + ' - ' +
+		plt.title('Original spectrum - ' + station + ' - ' +
 		          dict_title[resp_type], fontsize=14)
 		plt.savefig(FFT_out)
 		plt.close()
@@ -281,7 +240,8 @@ for dir in directories:
 		F   = 2.0          # Free surface
 		P   = 1/np.sqrt(2)  # Energy partioning
 		rho = 2700.0
-		C   = Rad*F*P/(4*np.pi*(vel[type_wave]**3))
+		C   = Rad*F*P/(4*np.pi*rho*vel[type_wave]**3)
+
 
 		Slog = {}
 
@@ -289,11 +249,21 @@ for dir in directories:
 		S = {}
 
 		for key, An in Aspec.items():
-			Slog[key] = np.log10(An) - np.log10(G(Rij[key])) + 1.36*fspec[key] * \
-			                     Rij[key]/(vel[type_wave] *
-			                               Q(fspec[key], az[key])) - np.log10(C)
-			S[key] = 10**(Slog[key])
+			#CC = 1.36*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key]))
+			#Slog[key] = np.log10(An) - np.log10(G(Rij[key])) - 1.36*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])) - np.log10(C)
+			#S[key] = 10**(Slog[key])
+			#S[key] = (An*np.exp(fspec[key]*Rij[key]/(vel*Q(fspec[key], az[key])))/(C*G(Rij[key])))
+			S[key] = (An*np.exp(fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])))/(C*G(Rij[key])))
 			ax.semilogy(fspec[key], S[key], label=date[key])
+			#print('**************************************')
+			#print('log10(An): ',    np.max(np.log10(An)))
+			#print('-log10(Rij): ', -np.log10(G(Rij[key]))) 
+			#print('CC: ', np.max(CC))
+			#print('-np.log(C): ', -np.log10(C))
+			#print('Slog: ', np.max(Slog[key]))
+			#print('**************************************')
+
+
 
 		ax.legend(fontsize=14)
 		ax.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.25)
@@ -315,13 +285,13 @@ for dir in directories:
 		    M0 = M0_func(mag[key])
 		    ax[0].semilogy(fspec[key],S[key], label=date[key] )
 		    ax[1].plot(fspec[key],np.log10(S[key]), label=date[key] )
-		    popt, pcov  = curve_fit(brune_log, fspec[key],np.log10(S[key]), bounds=(0,[20, fmax]), maxfev=1000)
+		    popt, pcov  = curve_fit(brune_log, fspec[key],np.log10(S[key]), bounds=(0.25,[20, fmax]), maxfev=1000)
 		    errors      = np.sqrt(np.diag((pcov)))
 		    fcut[key]   = popt[1]
 		    fcuts[key]  = errors[0]
 		    Mcorr[key]  = popt[0]
 		    Mcorrs[key] = errors[1] 
-		    stress[key] = stress_drop(fcut[key], k_sd, vel[type_wave], M0)/1e6
+		    stress[key] = stress_drop(fcut[key], k_sd, vel[type_wave], np.power(10,Mcorr[0]))/1e6
 
 		plt.gca().set_prop_cycle(None)
 		for key, fb in fspec.items():
@@ -329,11 +299,11 @@ for dir in directories:
 		    ax[1].plot(fb, brune_log(fb,  Mcorr[key], fcut[key]),'o-')
 		    #print('fcut')
 		    print('fcut[', key,']: ', '%5.2f'%fcut[key], ' Mcorr[', key, ']: ', '%5.2f'%Mcorr[key], 
-			' Stress drop[', key, ']: ', '%5.2f'%stress[key], 'MPa   SNR: ' + '%5.1f'%snr[key] )
+			' Stress drop[', key, ']: ', '%6.3f'%stress[key], 'MPa   SNR: ' + '%5.1f'%snr[key] )
 		    fout.write(station + '       ' + type_wave + '     ' + resp_type + '    ' + date[key] + '    ' + '%3.1f'%mag[key]  
 				+ '    ' + '%6.1f'%(Rij[key]/1e3) + '    ' + '%5.2f'%fcut[key] + '    ' + '%6.3f'%fcuts[key]  + '    '
 				+ '%5.2f'%Mcorr[key] + '    ' + '%6.3f'%Mcorrs[key]  + '    '
-				+ '%6.2f'%stress[key]  + '    ' + '%5.1f'%snr[key] + '    ' + sequence_id.split('_')[1] + '\n')
+				+ '%6.3f'%stress[key]  + '    ' + '%5.1f'%snr[key] + '    ' + sequence_id.split('_')[1] + '\n')
 
 		ax[0].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
 		ax[0].grid(b=True, which='minor', color='k', linestyle='--',linewidth=0.25)  
