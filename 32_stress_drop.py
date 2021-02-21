@@ -1,22 +1,25 @@
 import obspy as ob
 from obspy.signal.cross_correlation import xcorr_pick_correction
 from obspy.core.utcdatetime import UTCDateTime
+from ssn import get_response_files
 import numpy as np
 import json
 import glob
 import os
 from matplotlib import pyplot as plt
 from scipy.signal import tukey
+from ssn import get_response_files
 from mtspec import mtspec
 from scipy.optimize import curve_fit
 from utils import *
 plt.rcParams.update({'font.size': 16})
 
+
 fparam  = open('params.json')
 fstress = open('stress.json')
 stress  = json.load(fstress)
 params  = json.load(fparam)
-path    = os.path.join(params['root'], 'sequence_00*', 'raw')
+path    = os.path.join(params['root'], 'sequence_00010*', 'raw')
 
 resp_type = stress["resp_type"]
 type_wave = stress["type_wave"]
@@ -24,7 +27,8 @@ pre_filt  = stress["pre_filt"]
 tbef      = stress["tbef"]
 Nfft      = stress["Nfft"]
 fmin      = stress["fmin"]
-fmax      = stress["fmax"]
+#fmax      = stress["fmax"]
+plotting  = True
 
 directories = glob.glob(path)
 directories.sort()
@@ -47,7 +51,7 @@ print("0. stress: ", stress)
 #	return Sb
 
 
-def brune_log(f, log_M0, fc ):
+def brune_log(f, fc, log_M0 ):
 	if resp_type == "DISP":
 		Sb_log = log_M0-np.log10((1+(f/fc)**2))
 	elif resp_type == "VEL":
@@ -59,6 +63,16 @@ def brune_log(f, log_M0, fc ):
 
 	return Sb_log
 
+def brune_1p(f, fc):
+    if resp_type == "DISP":
+        Sb_log = -np.log10((1+(f/fc)**2))
+    elif resp_type == "VEL":
+        Sb_log = np.log10(2*np.pi*f)-np.log10(1+(f/fc)**2)
+    elif resp_type == "ACC":
+        Sb_log = 2*np.log10(2*np.pi*f)-np.log10(1+(f/fc)**2)
+    else:
+        None
+    return Sb_log
 
 for dir in directories:
 	print(dir)
@@ -66,12 +80,12 @@ for dir in directories:
 	sac.detrend('linear')
 	sta = set([tr.stats.sac.kstnm     for tr in sac])
 	sta = sorted(sta)
-	clean_directory(dir)
+	clean_directory(dir, resp_type)
 	sequence_id = dir.split('/')[-2]
-	Data_out    = os.path.join(dir, sequence_id + '.stress_drop.' + resp_type + '.dat')
+	Data_out    = os.path.join(dir, sequence_id + '.stress_drop.128s.' + resp_type + '.dat')
 	fout        = open(Data_out, 'w')
 
-	fout.write('Station  Wave    Type      date_time           mag   distance    fcut   std_fcut    Mcorr std_Mcorr strees_drop   SNR     ID \n')
+	fout.write('Station  Wave    Type      date_time           mag   distance    fcut   std_fcut    Mcorr std_Mcorr   Mw	res   StressDrop   SNR       ID \n')
 	for count, station in enumerate(sta):
 		print(count + 1, " - ", station)
 		sel = sac.select(station=station)
@@ -83,7 +97,8 @@ for dir in directories:
 		Invalid = False
 		#for k in range(len(sel)):
 		for k,tr in enumerate(sel):
-			RESP_FILE = get_reponse_files(params['iresp'], station, tr.stats.starttime)
+			RESP_FILE, fmax = get_response_files(params['iresp'], station, tr.stats.starttime)
+			#print('fmax: ', fmax)
 			#print('RESP: ', RESP_FILE)
 			if RESP_FILE is None:
 				Invalid = True
@@ -103,11 +118,11 @@ for dir in directories:
 
 
 		# Plot waveforms
-		waveform_out = os.path.join(dir, station + '.waveform.png')
-		PS_out       = os.path.join(dir, station + '.' + type_wave + '.png')
-		FFT_out      = os.path.join(dir, station + '.FFT.png')
-		SPEC_out     = os.path.join(dir, station + '.SPE.png')
-		Brune_out    = os.path.join(dir, station + '.BRUNE.png')
+		waveform_out = os.path.join(dir, station + '.waveform.128s.'+ resp_type + '.png')
+		PS_out       = os.path.join(dir, station + '.128s.' + type_wave + '.' + resp_type + '.png')
+		FFT_out      = os.path.join(dir, station + '.FFT.128s.' + resp_type + '.png')
+		SPEC_out     = os.path.join(dir, station + '.SPE.128s.' + resp_type + '.png')
+		Brune_out    = os.path.join(dir, station + '.BRUNE.128s.' + resp_type + '.png')
 
 		fig, ax = plt.subplots(len(sel) + 1, 1, figsize=(12, 6), sharex=False , squeeze=False)
 		ax = ax.flatten()
@@ -170,7 +185,8 @@ for dir in directories:
 
 		plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
 		#plt.subplots_adjust(hspace=0, wspace=0)
-		plt.savefig(waveform_out)
+		if plotting:
+			plt.savefig(waveform_out)
 		plt.close()
 
 		# Trim to p-wave
@@ -208,7 +224,8 @@ for dir in directories:
 
 		plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
 		plt.subplots_adjust(hspace=0, wspace=0)
-		plt.savefig(PS_out)
+		if plotting:
+			plt.savefig(PS_out)
 		plt.close()
 
 		# Estimate the spectrum
@@ -217,14 +234,18 @@ for dir in directories:
 
 		fig, ax = plt.subplots(1, 1, figsize=(12, 6))
 		for key, tr in d.items():
-			spec, freq = mtspec(data=tr, delta=dt[key], time_bandwidth=3, nfft=len(tr))
+			spec, freq, jackknife, _, _   = mtspec(data=tr, delta=dt[key], time_bandwidth=3, nfft=len(tr), statistics=True)
 			spec = np.sqrt(spec/2)
 			index = np.where(np.logical_and(freq >= fmin, freq <= fmax))
+			error_up   =  np.sqrt(jackknife[index[0], 0]/2)
+			error_down =  np.sqrt(jackknife[index[0], 1]/2) 
+			std_spec   =  (error_up - error_down)/2
 
 			Aspec[key] = spec[index]
 			fspec[key] = freq[index]
-
-			ax.semilogy(fspec[key], Aspec[key],
+            
+			ax.fill_between(freq[index], error_up, error_down, alpha=0.5)
+			ax.loglog(fspec[key], Aspec[key],
 			            label=date[key] + ' Mw=' + str(mag[key]))
 
 		ax.legend(fontsize=14)
@@ -233,7 +254,8 @@ for dir in directories:
 		plt.xlabel('Frequency [Hz]', fontsize=14)
 		plt.title('Original spectrum - ' + station + ' - ' +
 		          dict_title[resp_type], fontsize=14)
-		plt.savefig(FFT_out)
+		if plotting:
+		    plt.savefig(FFT_out)
 		plt.close()
 
 		# Geometrical spreading
@@ -250,19 +272,8 @@ for dir in directories:
 		S = {}
 
 		for key, An in Aspec.items():
-			#CC = 1.36*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key]))
-			#Slog[key] = np.log10(An) - np.log10(G(Rij[key])) - 1.36*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])) - np.log10(C)
-			#S[key] = 10**(Slog[key])
-			#S[key] = (An*np.exp(fspec[key]*Rij[key]/(vel*Q(fspec[key], az[key])))/(C*G(Rij[key])))
-			S[key] = (An*np.exp(fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])))/(C*G(Rij[key])))
-			ax.semilogy(fspec[key], S[key], label=date[key])
-			#print('**************************************')
-			#print('log10(An): ',    np.max(np.log10(An)))
-			#print('-log10(Rij): ', -np.log10(G(Rij[key]))) 
-			#print('CC: ', np.max(CC))
-			#print('-np.log(C): ', -np.log10(C))
-			#print('Slog: ', np.max(Slog[key]))
-			#print('**************************************')
+			S[key] = (An*np.exp(np.pi*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])))/(C*G(Rij[key])))
+			ax.loglog(fspec[key], S[key], label=date[key])
 
 
 
@@ -272,7 +283,8 @@ for dir in directories:
 		plt.xlabel('Frequency [Hz]', fontsize=14)
 		plt.title('Spectrum - ' + station + ' - ' +
 		          dict_title[resp_type], fontsize=14)
-		plt.savefig(SPEC_out)
+		if plotting:
+			plt.savefig(SPEC_out)
 		plt.close()
 
 		fcut   = {}
@@ -280,30 +292,48 @@ for dir in directories:
 		Mcorr  = {}
 		Mcorrs = {}
 		stress = {}
+		Mw     = {}
+		res    = {}
 
 		fig, ax = plt.subplots(2,1, figsize = (10,8))
 		for key, fb in fspec.items():
 		    M0 = M0_func(mag[key])
-		    ax[0].semilogy(fspec[key],S[key], label=date[key] )
-		    ax[1].plot(fspec[key],np.log10(S[key]), label=date[key] )
-		    popt, pcov  = curve_fit(brune_log, fspec[key],np.log10(S[key]), bounds=(0.25,[20, fmax]), maxfev=1000)
+		    ax[0].loglog(fspec[key],S[key], label=date[key] )
+		    ax[1].semilogx(fspec[key],np.log10(S[key]), label=date[key] )
+		    popt, pcov  = curve_fit(brune_log, fspec[key],np.log10(S[key]), bounds=([0, 14],[fmax, 20]), maxfev=1000)
+		    #popt, pcov  = curve_fit(brune_1p, fspec[key],np.log10(S[key]/M0), bounds=(0.25,[fmax]), maxfev=1000)
 		    errors      = np.sqrt(np.diag((pcov)))
-		    fcut[key]   = popt[1]
+		    fcut[key]   = popt[0]
 		    fcuts[key]  = errors[0]
-		    Mcorr[key]  = popt[0]
-		    Mcorrs[key] = errors[1] 
-		    stress[key] = stress_drop(fcut[key], k_sd, vel['S'], np.power(10,Mcorr[0]))/1e6
+		    if resp_type == 'DISP':
+		        Mcorr[key]  = np.max(np.log10(S[key]))
+		        Mcorrs[key] = 0.0
+			    #Mcorr[key]  = np.log10(M0)
+			    #Mcorrs[key] = 0.0 
+		    else:
+		        Mcorr[key]  = popt[1]
+		        Mcorrs[key] = errors[1] 
+			    #Mcorr[key]  = np.log10(M0)
+			    #Mcorrs[key] = 0.0 
+
+		    stress[key] = stress_drop(fcut[key], k_sd, vel['S'], np.power(10,Mcorr[key]))/1e6
+		    #stress[key] = stress_drop(fcut[key], k_sd, vel['S'], M0 )/1e6
 
 		plt.gca().set_prop_cycle(None)
 		for key, fb in fspec.items():
-		    M0 = M0_func(mag[key])
-		    ax[1].plot(fb, brune_log(fb,  Mcorr[key], fcut[key]),'o-')
-		    #print('fcut')
+		    #M0 = M0_func(mag[key])
+		    Mw[key] = Mw_log(Mcorr[key])
+			
+		    ax[1].semilogx(fb, brune_log(fb, fcut[key], Mcorr[key]),'o-')
+		    res[key] = variance_reduction(np.log10(S[key]),brune_log(fb, fcut[key], Mcorr[key] ))
 		    print('fcut[', key,']: ', '%5.2f'%fcut[key], ' Mcorr[', key, ']: ', '%5.2f'%Mcorr[key], 
-			' Stress drop[', key, ']: ', '%6.3f'%stress[key], 'MPa   SNR: ' + '%5.1f'%snr[key] )
+			' Stress drop[', key, ']: ', '%6.3f'%stress[key], 'MPa   SNR: ' + '%5.1f'%snr[key],
+			' Mw[', key, ']: ', '%3.1f'%Mw[key], ' Md[', key, ']: ', '%3.1f'%mag[key], ' Res[', key, ']: ',
+			'%5.3f'%res[key])
 		    fout.write(station + '       ' + type_wave + '     ' + resp_type + '    ' + date[key] + '    ' + '%3.1f'%mag[key]  
 				+ '    ' + '%6.1f'%(Rij[key]/1e3) + '    ' + '%5.2f'%fcut[key] + '    ' + '%6.3f'%fcuts[key]  + '    '
 				+ '%5.2f'%Mcorr[key] + '    ' + '%6.3f'%Mcorrs[key]  + '    '
+				+ '%3.1f'%Mw[key]    + '    ' + '%5.3f'%res[key]  + '    '
 				+ '%6.3f'%stress[key]  + '    ' + '%5.1f'%snr[key] + '    ' + sequence_id.split('_')[1] + '\n')
 
 		ax[0].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
@@ -313,7 +343,8 @@ for dir in directories:
 		plt.suptitle('Brune Spectrum ' + dict_title[resp_type] + ' - ' + station 
 			+ '- fc = ' + '%5.2f'%fcut[key] + 'Hz ' + ' Stress Drop = ' + '%5.2f'%stress[key] + 'MPa', fontsize=17)
 		plt.xlabel('Frequency [Hz]',fontsize=14)
-		plt.savefig(Brune_out)
+		if plotting:
+			plt.savefig(Brune_out)
 		plt.close()
 			
 

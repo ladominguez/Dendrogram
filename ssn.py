@@ -1,5 +1,8 @@
-def get_reponse_files(dir_resp, station_name, t_start):
-	fmax = 20
+import os
+from obspy.core.utcdatetime import UTCDateTime
+
+def get_response_files(dir_resp, station_name, t_start):
+    fmax = 20
     if station_name.strip() == 'ARIG':
         RESP_FILE = os.path.join(dir_resp, 'ARIG_IG_20090308_21001231.RESP')
     elif station_name.strip() == 'CAIG':
@@ -18,7 +21,7 @@ def get_reponse_files(dir_resp, station_name, t_start):
         RESP_FILE = os.path.join(dir_resp, 'DAIG_IG_20150402_21001231.RESP')
     elif station_name.strip() == 'PNIG':
         if t_start >= UTCDateTime(1994, 3, 28) and t_start < UTCDateTime(2007, 7, 11):
-		    fmax = 8
+            fmax = 8
             RESP_FILE = os.path.join(
                 dir_resp, 'PNIG_IG_19940328_20070711.RESP')
         elif t_start >= UTCDateTime(2007, 7, 11) and t_start < UTCDateTime(2013, 10, 29):
@@ -40,7 +43,7 @@ def get_reponse_files(dir_resp, station_name, t_start):
             return None, None
     elif station_name.strip() == 'MEIG':
         if t_start >= UTCDateTime(2004, 9, 8) and t_start < UTCDateTime(2014, 4, 26):
-		    fmax = 8
+            fmax = 8
             RESP_FILE = os.path.join(
                 dir_resp, 'MEIG_IG_20040908_20140426.RESP')
         elif t_start >= UTCDateTime(2014, 4, 26):
@@ -54,7 +57,7 @@ def get_reponse_files(dir_resp, station_name, t_start):
 
     elif station_name.strip() == 'OXIG':
         if t_start >= UTCDateTime(1994, 3, 2) and t_start < UTCDateTime(2007, 1, 22):
-		    fmax = 8
+            fmax = 8
             RESP_FILE = os.path.join(
                 dir_resp, 'OXIG_IG_19940302_20070122.RESP')
         elif t_start >= UTCDateTime(2007, 1, 22):
@@ -70,7 +73,7 @@ def get_reponse_files(dir_resp, station_name, t_start):
 
     elif station_name.strip() == 'PLIG':
         if t_start >= UTCDateTime(1993, 10, 23) and t_start < UTCDateTime(2009, 1, 16):
-		    fmax = 8
+            fmax = 8
             RESP_FILE = os.path.join(
                 dir_resp, 'PLIG_IG_19931023_20090116.RESP')
         elif t_start >= UTCDateTime(2009, 1, 16):

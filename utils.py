@@ -4,9 +4,17 @@ from obspy.core.utcdatetime import UTCDateTime
 import numpy as np
 import json
 
+def residuals(d_obs, d_model):
+	return np.mean(np.power(d_obs-d_model,2))
 
-def clean_directory(dir):
-    previous = glob.glob(os.path.join(dir, "*.png"))
+def variance_reduction(d_obs, d_model):
+	#print('***MODEL****')
+	#for k, do in enumerate(d_obs):
+	#	print(do, ' ', d_model[k])
+	return (1.-np.sum(np.power(d_obs - d_model,2))/np.sum(np.power(d_obs,2)))*100.
+
+def clean_directory(dir,type_resp):
+    previous = glob.glob(os.path.join(dir, "*" + type_resp  + "*.png"))
     for png_file in previous:
         os.remove(png_file)
 
@@ -69,13 +77,13 @@ def fit_curve(fdata, Bdata, resp_type):
 #        None
 #    return Sb_log
 
-def brune_1p(f, fc):
-    if resp_type == "DISP":
-        Sb_log = -np.log10((1+(f/fc)**2))
-    elif resp_type == "VEL":
-        Sb_log = np.log10(2*np.pi*f)-np.log10(1+(f/fc)**2)
-    elif resp_type == "ACC":
-        Sb_log = 2*np.log10(2*np.pi*f)-np.log10(1+(f/fc)**2)
-    else:
-        None
-    return Sb_log
+# def brune_1p(f, fc):
+#    if resp_type == "DISP":
+#        Sb_log = -np.log10((1+(f/fc)**2))
+#    elif resp_type == "VEL":
+#        Sb_log = np.log10(2*np.pi*f)-np.log10(1+(f/fc)**2)
+#    elif resp_type == "ACC":
+#        Sb_log = 2*np.log10(2*np.pi*f)-np.log10(1+(f/fc)**2)
+#    else:
+#        None
+#    return Sb_log
