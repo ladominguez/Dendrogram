@@ -8,10 +8,17 @@ def residuals(d_obs, d_model):
 	return np.mean(np.power(d_obs-d_model,2))
 
 def variance_reduction(d_obs, d_model):
-	#print('***MODEL****')
-	#for k, do in enumerate(d_obs):
-	#	print(do, ' ', d_model[k])
+	#d_avg = np.mean(d_obs)
+	#d_obs = d_obs - d_avg
+	#d_model = d_model - d_avg
 	return (1.-np.sum(np.power(d_obs - d_model,2))/np.sum(np.power(d_obs,2)))*100.
+
+def coeff_r2(d_obs, d_model):
+	d_avg   = np.mean(d_obs)
+	tot_var = np.sum(np.power(d_obs - d_avg,2))
+	res     = np.sum(np.power(d_obs - d_model,2))
+	return (1.-res/tot_var)*100
+
 
 def clean_directory(dir,type_resp):
     previous = glob.glob(os.path.join(dir, "*" + type_resp  + "*.png"))

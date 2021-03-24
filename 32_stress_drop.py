@@ -19,7 +19,7 @@ fparam  = open('params.json')
 fstress = open('stress.json')
 stress  = json.load(fstress)
 params  = json.load(fparam)
-path    = os.path.join(params['root'], 'sequence_00010*', 'raw')
+path    = os.path.join(params['root'], 'sequence_00001*', 'raw')
 
 resp_type = stress["resp_type"]
 type_wave = stress["type_wave"]
@@ -28,7 +28,7 @@ tbef      = stress["tbef"]
 Nfft      = stress["Nfft"]
 fmin      = stress["fmin"]
 #fmax      = stress["fmax"]
-plotting  = True
+plotting  = True #stress["plotting"]
 
 directories = glob.glob(path)
 directories.sort()
@@ -82,10 +82,10 @@ for dir in directories:
 	sta = sorted(sta)
 	clean_directory(dir, resp_type)
 	sequence_id = dir.split('/')[-2]
-	Data_out    = os.path.join(dir, sequence_id + '.stress_drop.128s.' + resp_type + '.dat')
+	Data_out    = os.path.join(dir, sequence_id + '.stress_drop.' + resp_type + '.test')
 	fout        = open(Data_out, 'w')
 
-	fout.write('Station  Wave    Type      date_time           mag   distance    fcut   std_fcut    Mcorr std_Mcorr   Mw	res   StressDrop   SNR       ID \n')
+	fout.write('Station  Wave    Type      date_time         distance     Md    Mw     fcut   std_fcut    Mcorr    std_Mcorr   Stress    SNR     VarRed      R2    ID \n')
 	for count, station in enumerate(sta):
 		print(count + 1, " - ", station)
 		sel = sac.select(station=station)
@@ -123,9 +123,9 @@ for dir in directories:
 		FFT_out      = os.path.join(dir, station + '.FFT.128s.' + resp_type + '.png')
 		SPEC_out     = os.path.join(dir, station + '.SPE.128s.' + resp_type + '.png')
 		Brune_out    = os.path.join(dir, station + '.BRUNE.128s.' + resp_type + '.png')
-
-		fig, ax = plt.subplots(len(sel) + 1, 1, figsize=(12, 6), sharex=False , squeeze=False)
-		ax = ax.flatten()
+		if plotting:
+			fig, ax = plt.subplots(len(sel) + 1, 1, figsize=(12, 6), sharex=False , squeeze=False)
+			ax = ax.flatten()
 		for k, tr in enumerate(sel):
 			if k == 0:
 				tmaster  = tr
@@ -157,44 +157,47 @@ for dir in directories:
 			aux     = tr.copy()
 			aux.detrend('linear')
 			#aux.filter("bandpass", freqmin = 1.0, freqmax = 10., zerophase=True)
+			if plotting:
+				ax[k].plot(aux.times(), aux.data, 'k', linewidth=0.25, label=date[k])
+				ax[k].plot(aux.stats.sac.t5, 0, 'r*', markersize=15)
+				# ax[k].plot(tr.stats.sac.t1,0,'b*',markersize=15)
+				ax[k].grid()
+				ax[k].legend(fontsize=14)
 
-			ax[k].plot(aux.times(), aux.data, 'k', linewidth=0.25, label=date[k])
-			ax[k].plot(aux.stats.sac.t5, 0, 'r*', markersize=15)
-			# ax[k].plot(tr.stats.sac.t1,0,'b*',markersize=15)
-			ax[k].grid()
-			ax[k].legend(fontsize=14)
-
-			ax[k].set_ylabel(dict_ylabel[resp_type], fontsize=14)
-			ax[k].set_xlim([0,np.ceil(tp_wave.max()*3/5)*5])
+				ax[k].set_ylabel(dict_ylabel[resp_type], fontsize=14)
+				ax[k].set_xlim([0,np.ceil(tp_wave.max()*3/5)*5])
 			
-			x_lims_wave = ax[k].get_xlim()
-			y_data_plot = np.where( (aux.times() > x_lims_wave[0]) &  (aux.times() < x_lims_wave[1]) )[0]
-			ax[k].set_ylim( aux.data[y_data_plot].min(), aux.data[y_data_plot].max() )
+				x_lims_wave = ax[k].get_xlim()
+				y_data_plot = np.where( (aux.times() > x_lims_wave[0]) &  (aux.times() < x_lims_wave[1]) )[0]
+				ax[k].set_ylim( aux.data[y_data_plot].min(), aux.data[y_data_plot].max() )
+
 			index_t5   = np.where(np.logical_and(tr.times() >= t5_mas -1,  aux.times() <= t5_mas + 5 ))
 			max_val    = np.amax(np.abs(aux.data[index_t5]))
 
 			roll_aux = 	np.roll(aux.data, nsamples)/max_val
-			ax[len(sel)].plot(aux.times(), roll_aux)
-			ax[len(sel)].grid(b=True)
-			ax[len(sel)].set_xlim([t5_mas -0.5, t5_mas + 1.0])
+			if plotting:
+				ax[len(sel)].plot(aux.times(), roll_aux)
+				ax[len(sel)].grid(b=True)
+				ax[len(sel)].set_xlim([t5_mas -0.5, t5_mas + 1.0])
 
-			x_lims_wave = ax[len(sel)].get_xlim()
-			y_data_plot = np.where( (aux.times() > x_lims_wave[0]) &  (aux.times() < x_lims_wave[1]) )[0]	
-			ax[len(sel)].set_ylim( roll_aux[y_data_plot].min(), roll_aux[y_data_plot].max() )
+				x_lims_wave = ax[len(sel)].get_xlim()
+				y_data_plot = np.where( (aux.times() > x_lims_wave[0]) &  (aux.times() < x_lims_wave[1]) )[0]	
+				ax[len(sel)].set_ylim( roll_aux[y_data_plot].min(), roll_aux[y_data_plot].max() )
 
 
-		plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
 		#plt.subplots_adjust(hspace=0, wspace=0)
 		if plotting:
+			plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
 			plt.savefig(waveform_out)
-		plt.close()
+			plt.close()
 
 		# Trim to p-wave
 		d       = {}
 		noise   = {}
 		snr     = {}
-		fig, ax = plt.subplots(len(sel), 1, figsize=(24, 8), sharex=True, squeeze=False )
-		ax      = ax.flatten()
+		if plotting:
+			fig, ax = plt.subplots(len(sel), 1, figsize=(24, 8), sharex=True, squeeze=False )
+			ax      = ax.flatten()
 		for k, tr in enumerate(sel):
 			t = tr.times() + tr.stats.sac.b
 			dt[k] = tr.stats.delta
@@ -215,27 +218,32 @@ for dir in directories:
 			taper  = tukey(Nfft, alpha=0.1)
 			d[k]   = np.multiply(d[k], taper)
 			snr[k] = rms(d[k])/rms(noise[k])
-			ax[k].plot(np.linspace(-0.5, (Nfft-1)*dt[k]-0.5, Nfft),
+			if plotting:
+				ax[k].plot(np.linspace(-0.5, (Nfft-1)*dt[k]-0.5, Nfft),
 			           d[k], 'k', linewidth=1, label=date[k])
-			ax[k].legend(fontsize=14)
-			ax[k].set_ylabel(dict_ylabel[resp_type], fontsize=14)
-			ax[k].plot(np.linspace(-0.5, (Nfft-1)*dt[k]-0.5, Nfft), taper*np.max(d[k]))
-			ax[k].grid()
+				ax[k].legend(fontsize=14)
+				ax[k].set_ylabel(dict_ylabel[resp_type], fontsize=14)
+				ax[k].plot(np.linspace(-0.5, (Nfft-1)*dt[k]-0.5, Nfft), taper*np.max(d[k]))
+				ax[k].grid()
 
-		plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
-		plt.subplots_adjust(hspace=0, wspace=0)
 		if plotting:
+			plt.suptitle(station + ' - ' + resp_type + ' - ' + type_wave + ' wave')
+			plt.subplots_adjust(hspace=0, wspace=0)
 			plt.savefig(PS_out)
-		plt.close()
+			plt.close()
 
 		# Estimate the spectrum
 		Aspec = {}
 		fspec = {}
-
-		fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+		Nspec = {}
+		if plotting:
+			fig, ax = plt.subplots(1, 1, figsize=(12, 6))
 		for key, tr in d.items():
 			spec, freq, jackknife, _, _   = mtspec(data=tr, delta=dt[key], time_bandwidth=3, nfft=len(tr), statistics=True)
-			spec = np.sqrt(spec/2)
+			spec_noise, freq_noise, jackknife_noise, _, _   =  \
+			                              mtspec(data=noise[key], delta=dt[key], time_bandwidth=3, nfft=len(noise[key]), statistics=True)
+			spec       = np.sqrt(spec/2)
+			spec_noise = np.sqrt(spec_noise/2) 
 			index = np.where(np.logical_and(freq >= fmin, freq <= fmax))
 			error_up   =  np.sqrt(jackknife[index[0], 0]/2)
 			error_down =  np.sqrt(jackknife[index[0], 1]/2) 
@@ -243,49 +251,54 @@ for dir in directories:
 
 			Aspec[key] = spec[index]
 			fspec[key] = freq[index]
-            
-			ax.fill_between(freq[index], error_up, error_down, alpha=0.5)
-			ax.loglog(fspec[key], Aspec[key],
+			Nspec[key] = spec_noise[index]
+			if plotting:
+				ax.fill_between(freq[index], error_up, error_down, alpha=0.5)
+				ax.loglog(fspec[key], Aspec[key],
 			            label=date[key] + ' Mw=' + str(mag[key]))
+				ax.loglog(fspec[key], Nspec[key],'k')
 
-		ax.legend(fontsize=14)
-		ax.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.25)
-		ax.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.25)
-		plt.xlabel('Frequency [Hz]', fontsize=14)
-		plt.title('Original spectrum - ' + station + ' - ' +
-		          dict_title[resp_type], fontsize=14)
 		if plotting:
-		    plt.savefig(FFT_out)
-		plt.close()
+			ax.legend(fontsize=14)
+			ax.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.25)
+			ax.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.25)
+			plt.xlabel('Frequency [Hz]', fontsize=14)
+			plt.title('Original spectrum - ' + station + ' - ' + dict_title[resp_type], fontsize=14)
+			plt.savefig(FFT_out)
+			plt.close()
 
 		# Geometrical spreading
 		Rad = 0.55         # Radiation pattern Boore and Boatwrigth
 		F   = 2.0          # Free surface
-		P   = 1/np.sqrt(2)  # Energy partioning
+		P   = 1.0          # Energy partioning
 		rho = 2700.0
 		C   = Rad*F*P/(4*np.pi*rho*vel[type_wave]**3)
 
 
 		Slog = {}
-
-		fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+		if plotting:
+			fig, ax = plt.subplots(1, 1, figsize=(12, 6))
 		S = {}
+		N = {}
 
 		for key, An in Aspec.items():
-			S[key] = (An*np.exp(np.pi*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])))/(C*G(Rij[key])))
-			ax.loglog(fspec[key], S[key], label=date[key])
+			S[key] = (        An*np.exp(np.pi*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])))/(C*G(Rij[key])))
+			N[key] = (Nspec[key]*np.exp(np.pi*fspec[key]*Rij[key]/(vel[type_wave]*Q(fspec[key], az[key])))/(C*G(Rij[key])))
+			if plotting:
+				ax.loglog(fspec[key], S[key], label=date[key])
+				ax.loglog(fspec[key], N[key], color='k', linestyle='--')
 
 
 
-		ax.legend(fontsize=14)
-		ax.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.25)
-		ax.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.25)
-		plt.xlabel('Frequency [Hz]', fontsize=14)
-		plt.title('Spectrum - ' + station + ' - ' +
-		          dict_title[resp_type], fontsize=14)
 		if plotting:
+			ax.legend(fontsize=14)
+			ax.grid(b=True, which='major', color='k', linestyle='--', linewidth=0.25)
+			ax.grid(b=True, which='minor', color='k', linestyle='--', linewidth=0.25)
+			plt.xlabel('Frequency [Hz]', fontsize=14)
+			plt.title('Spectrum - ' + station + ' - ' +
+		          dict_title[resp_type], fontsize=14)
 			plt.savefig(SPEC_out)
-		plt.close()
+			plt.close()
 
 		fcut   = {}
 		fcuts  = {}
@@ -293,14 +306,18 @@ for dir in directories:
 		Mcorrs = {}
 		stress = {}
 		Mw     = {}
-		res    = {}
-
-		fig, ax = plt.subplots(2,1, figsize = (10,8))
+		var    = {}
+		r2     = {}
+		if plotting:
+			fig, ax = plt.subplots(2,1, figsize = (10,8))
 		for key, fb in fspec.items():
 		    M0 = M0_func(mag[key])
-		    ax[0].loglog(fspec[key],S[key], label=date[key] )
-		    ax[1].semilogx(fspec[key],np.log10(S[key]), label=date[key] )
-		    popt, pcov  = curve_fit(brune_log, fspec[key],np.log10(S[key]), bounds=([0, 14],[fmax, 20]), maxfev=1000)
+		    if plotting:
+		    	ax[0].loglog(fspec[key],S[key], label=date[key] )
+		    	ax[0].loglog(fspec[key],N[key], color='k', linestyle='--')
+		    	ax[1].semilogx(fspec[key],np.log10(S[key]), label=date[key] )
+		    	ax[1].semilogx(fspec[key],np.log10(N[key]), color='k', linestyle='--')
+		    popt, pcov  = curve_fit(brune_log, fspec[key],np.log10(S[key]), bounds=([0, 10],[fmax, 20]), maxfev=1000)
 		    #popt, pcov  = curve_fit(brune_1p, fspec[key],np.log10(S[key]/M0), bounds=(0.25,[fmax]), maxfev=1000)
 		    errors      = np.sqrt(np.diag((pcov)))
 		    fcut[key]   = popt[0]
@@ -318,36 +335,44 @@ for dir in directories:
 
 		    stress[key] = stress_drop(fcut[key], k_sd, vel['S'], np.power(10,Mcorr[key]))/1e6
 		    #stress[key] = stress_drop(fcut[key], k_sd, vel['S'], M0 )/1e6
-
-		plt.gca().set_prop_cycle(None)
+		if plotting:
+			plt.gca().set_prop_cycle(None)
 		for key, fb in fspec.items():
 		    #M0 = M0_func(mag[key])
 		    Mw[key] = Mw_log(Mcorr[key])
-			
-		    ax[1].semilogx(fb, brune_log(fb, fcut[key], Mcorr[key]),'o-')
-		    res[key] = variance_reduction(np.log10(S[key]),brune_log(fb, fcut[key], Mcorr[key] ))
+		    if plotting:
+		    	ax[1].semilogx(fb, brune_log(fb, fcut[key], Mcorr[key]),'o-')
+
+		    var[key] = variance_reduction(np.log10(S[key]),brune_log(fb, fcut[key], Mcorr[key] ))
+		    r2[key]  = coeff_r2(          np.log10(S[key]),brune_log(fb, fcut[key], Mcorr[key] ))
 		    print('fcut[', key,']: ', '%5.2f'%fcut[key], ' Mcorr[', key, ']: ', '%5.2f'%Mcorr[key], 
 			' Stress drop[', key, ']: ', '%6.3f'%stress[key], 'MPa   SNR: ' + '%5.1f'%snr[key],
 			' Mw[', key, ']: ', '%3.1f'%Mw[key], ' Md[', key, ']: ', '%3.1f'%mag[key], ' Res[', key, ']: ',
-			'%5.3f'%res[key])
-		    fout.write(station + '       ' + type_wave + '     ' + resp_type + '    ' + date[key] + '    ' + '%3.1f'%mag[key]  
-				+ '    ' + '%6.1f'%(Rij[key]/1e3) + '    ' + '%5.2f'%fcut[key] + '    ' + '%6.3f'%fcuts[key]  + '    '
+			'%5.3f'%var[key])
+		    fout.write(station + '       '
+			    + type_wave + '     ' 
+				+ resp_type + '    ' 
+				+ date[key] + '    ' 
+				+ '%6.1f'%(Rij[key]/1e3) + '    ' 
+				+ '%3.1f'%mag[key]  + '    ' 
+				+ '%3.1f'%Mw[key]    + '    '   
+			    + '%5.2f'%fcut[key]  + '    ' + '%6.3f'%fcuts[key]   + '    '
 				+ '%5.2f'%Mcorr[key] + '    ' + '%6.3f'%Mcorrs[key]  + '    '
-				+ '%3.1f'%Mw[key]    + '    ' + '%5.3f'%res[key]  + '    '
-				+ '%6.3f'%stress[key]  + '    ' + '%5.1f'%snr[key] + '    ' + sequence_id.split('_')[1] + '\n')
+				+ '%6.3f'%stress[key]  + '    ' 
+				+ '%5.1f'%snr[key]     + '    ' 
+				+ '%5.3f'%var[key]     + '    '
+				+ '%5.1f'%r2[key]      + '    ' 
+				+ sequence_id.split('_')[1] + '\n')
 
-		ax[0].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
-		ax[0].grid(b=True, which='minor', color='k', linestyle='--',linewidth=0.25)  
-		ax[1].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
-		ax[1].grid(b=True, which='minor', color='k', linestyle='--',linewidth=0.25)  
-		plt.suptitle('Brune Spectrum ' + dict_title[resp_type] + ' - ' + station 
-			+ '- fc = ' + '%5.2f'%fcut[key] + 'Hz ' + ' Stress Drop = ' + '%5.2f'%stress[key] + 'MPa', fontsize=17)
-		plt.xlabel('Frequency [Hz]',fontsize=14)
 		if plotting:
+			ax[0].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
+			ax[0].grid(b=True, which='minor', color='k', linestyle='--',linewidth=0.25)  
+			ax[1].grid(b=True, which='major', color='k', linestyle='--',linewidth=0.25)
+			ax[1].grid(b=True, which='minor', color='k', linestyle='--',linewidth=0.25)  
+			plt.suptitle('Brune Spectrum ' + dict_title[resp_type] + ' - ' + station 
+				+ '- fc = ' + '%5.2f'%fcut[key] + 'Hz ' + ' Stress Drop = ' + '%5.2f'%stress[key] + 'MPa', fontsize=17)
+			plt.xlabel('Frequency [Hz]',fontsize=14)
 			plt.savefig(Brune_out)
-		plt.close()
-			
-
-			
+			plt.close()
 	fout.close()
 	
